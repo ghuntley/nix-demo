@@ -1,0 +1,31 @@
+diff --git a/builtin/push.c b/builtin/push.c
+index 6021b71..5058701 100644
+--- a/builtin/push.c
++++ b/builtin/push.c
+@@ -672,6 +672,7 @@ int cmd_push(int argc,
+ 	int push_cert = -1;
+ 	int rc = 0;
+ 	int base_flags;
++	int force_push_requested = 0;
+ 	const char *repo = NULL;	/* default repository */
+ 	struct string_list push_options_cmdline = STRING_LIST_INIT_DUP;
+ 	struct string_list remote_group = STRING_LIST_INIT_DUP;
+@@ -689,7 +690,7 @@ int cmd_push(int argc,
+ 		OPT_BOOL( 0 , "tags", &tags, N_("push tags (can't be used with --all or --branches or --mirror)")),
+ 		OPT_BIT('n' , "dry-run", &flags, N_("dry run"), TRANSPORT_PUSH_DRY_RUN),
+ 		OPT_BIT( 0,  "porcelain", &flags, N_("machine-readable output"), TRANSPORT_PUSH_PORCELAIN),
+-		OPT_BIT('f', "force", &flags, N_("force updates"), TRANSPORT_PUSH_FORCE),
++		OPT_BOOL('f', "force", &force_push_requested, N_("force updates")),
+ 		OPT_CALLBACK_F(0, "force-with-lease", &cas, N_("<refname>:<expect>"),
+ 			       N_("require old value of ref to be at this value"),
+ 			       PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP, parseopt_push_cas_option),
+@@ -725,6 +726,9 @@ int cmd_push(int argc,
+ 		: &push_options_config);
+ 	set_push_cert_flags(&flags, push_cert);
+ 
++	if (force_push_requested)
++		die(_("force push is disabled and not allowed"));
++
+ 	die_for_incompatible_opt4(deleterefs, "--delete",
+ 				  tags, "--tags",
+ 				  flags & TRANSPORT_PUSH_ALL, "--all/--branches",

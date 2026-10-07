@@ -1,0 +1,58 @@
+diff --git a/builtin/push.c b/builtin/push.c
+index 5058701..2d45c66 100644
+--- a/builtin/push.c
++++ b/builtin/push.c
+@@ -729,6 +729,14 @@ int cmd_push(int argc,
+ 	if (force_push_requested)
+ 		die(_("force push is disabled and not allowed"));
+ 
++	if (!is_empty_cas(&cas))
++		die(_("force push with lease is disabled and not allowed"));
++
++	for (int i = 1; i < argc; i++)
++		if (argv[i][0] == '+')
++			die(_("force push via +refspec '%s' is disabled and not allowed"),
++			    argv[i]);
++
+ 	die_for_incompatible_opt4(deleterefs, "--delete",
+ 				  tags, "--tags",
+ 				  flags & TRANSPORT_PUSH_ALL, "--all/--branches",
+diff --git a/remote.c b/remote.c
+index 00723b3..f2d534e 100644
+--- a/remote.c
++++ b/remote.c
+@@ -1666,8 +1666,15 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
+ {
+ 	struct ref *ref;
+ 
++	/*
++	 * Force pushes are disabled: ignore --force, --mirror and +refspecs
++	 * (from the command line or remote.<name>.push config) so every
++	 * update must fast-forward.
++	 */
++	(void)force_update;
++
+ 	for (ref = remote_refs; ref; ref = ref->next) {
+-		int force_ref_update = ref->force || force_update;
++		int force_ref_update = 0;
+ 		int reject_reason = 0;
+ 
+ 		if (ref->peer_ref)
+@@ -1701,13 +1708,10 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
+ 			else if (ref->check_reachable && ref->unreachable)
+ 				reject_reason =
+ 					REF_STATUS_REJECT_REMOTE_UPDATED;
+-			else
+-				/*
+-				 * If the ref isn't stale, and is reachable
+-				 * from one of the reflog entries of
+-				 * the local branch, force the update.
+-				 */
+-				force_ref_update = 1;
++			/*
++			 * Upstream forces the update here when the lease
++			 * holds; leases no longer imply force.
++			 */
+ 		}
+ 
+ 		/*
