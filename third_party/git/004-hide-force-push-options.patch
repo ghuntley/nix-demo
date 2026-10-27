@@ -1,0 +1,38 @@
+diff --git a/builtin/push.c b/builtin/push.c
+index 2d45c66..f34a553 100644
+--- a/builtin/push.c
++++ b/builtin/push.c
+@@ -310,8 +310,7 @@ static const char message_advice_ref_already_exists[] =
+ 
+ static const char message_advice_ref_needs_force[] =
+ 	N_("You cannot update a remote ref that points at a non-commit object,\n"
+-	   "or update a remote ref to make it point at a non-commit object,\n"
+-	   "without using the '--force' option.\n");
++	   "or update a remote ref to make it point at a non-commit object.\n");
+ 
+ static const char message_advice_ref_needs_update[] =
+ 	N_("Updates were rejected because the tip of the remote-tracking branch has\n"
+@@ -690,13 +689,18 @@ int cmd_push(int argc,
+ 		OPT_BOOL( 0 , "tags", &tags, N_("push tags (can't be used with --all or --branches or --mirror)")),
+ 		OPT_BIT('n' , "dry-run", &flags, N_("dry run"), TRANSPORT_PUSH_DRY_RUN),
+ 		OPT_BIT( 0,  "porcelain", &flags, N_("machine-readable output"), TRANSPORT_PUSH_PORCELAIN),
+-		OPT_BOOL('f', "force", &force_push_requested, N_("force updates")),
++		/*
++		 * Force pushes are disabled: these are still parsed so they can
++		 * be refused with a clear error, but hidden from -h and usage.
++		 */
++		OPT_HIDDEN_BOOL('f', "force", &force_push_requested, N_("force updates")),
+ 		OPT_CALLBACK_F(0, "force-with-lease", &cas, N_("<refname>:<expect>"),
+ 			       N_("require old value of ref to be at this value"),
+-			       PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP, parseopt_push_cas_option),
+-		OPT_BIT(0, TRANS_OPT_FORCE_IF_INCLUDES, &flags,
+-			N_("require remote updates to be integrated locally"),
+-			TRANSPORT_PUSH_FORCE_IF_INCLUDES),
++			       PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP | PARSE_OPT_HIDDEN,
++			       parseopt_push_cas_option),
++		OPT_BIT_F(0, TRANS_OPT_FORCE_IF_INCLUDES, &flags,
++			  N_("require remote updates to be integrated locally"),
++			  TRANSPORT_PUSH_FORCE_IF_INCLUDES, PARSE_OPT_HIDDEN),
+ 		OPT_CALLBACK(0, "recurse-submodules", &recurse_submodules, "(check|on-demand|no)",
+ 			     N_("control recursive pushing of submodules"), option_parse_recurse_submodules),
+ 		OPT_BOOL_F( 0 , "thin", &thin, N_("use thin pack"), PARSE_OPT_NOCOMPLETE),

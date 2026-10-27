@@ -69,6 +69,7 @@ git.overrideAttrs (oldAttrs: {
     ./001-disable-force-push.patch
     ./002-disable-force-with-lease-and-plus-refspec.patch
     ./003-remove-force-push-from-docs.patch
+    ./004-hide-force-push-options.patch
   ];
   doCheck = false;
   doInstallCheck = false;
@@ -77,13 +78,14 @@ git.overrideAttrs (oldAttrs: {
 
 In words: "take nixpkgs' git recipe, keep everything, append my patches".
 
-The three patches work at different layers:
+The four patches work at different layers:
 
 | Patch | Where | Blocks |
 |---|---|---|
 | `001-disable-force-push.patch` | `builtin/push.c` (option parsing) | `git push --force` / `-f` |
 | `002-disable-force-with-lease-and-plus-refspec.patch` | `builtin/push.c` and `remote.c` (`set_ref_status_for_push`) | `--force-with-lease`, `+refspec` on the command line, and as a backstop *any* forced ref update: `+` refspecs from `remote.<name>.push` config, `--mirror`, `git send-pack --force` |
 | `003-remove-force-push-from-docs.patch` | `Documentation/` (`git-push`, `git-send-pack`, `config/push`) | nothing: it drops `--force`, `--force-with-lease`, `--force-if-includes` and `+refspec` from `man git-push` and friends, and adds a FORCE PUSHES section saying why |
+| `004-hide-force-push-options.patch` | `builtin/push.c` (option table, advice) | nothing: it hides `-f`/`--force`, `--force-with-lease` and `--force-if-includes` from `git push -h` (they still parse, so they're refused with a clear error) and drops "use `--force`" from push advice |
 
 `set_ref_status_for_push` is the single place in git that decides whether a ref update may skip the fast-forward check, so patching it closes every route rather than chasing flags one by one. Plain fast-forward pushes and branch deletion keep working. When nixpkgs bumps git to a new version, you get the update for free. You only maintain the patch.
 
@@ -258,7 +260,8 @@ $ podman run --rm git-no-force-push:latest --version
         ├── default.nix             # overrideAttrs: append our patches to nixpkgs' git
         ├── 001-disable-force-push.patch
         ├── 002-disable-force-with-lease-and-plus-refspec.patch
-        └── 003-remove-force-push-from-docs.patch
+        ├── 003-remove-force-push-from-docs.patch
+        └── 004-hide-force-push-options.patch
 ```
 
 `third_party/<name>/` is a convention for local modifications to upstream software. Every custom patch is numbered and named by purpose, and nothing else in the repository needs to know it exists.
@@ -306,4 +309,4 @@ The patch here is small on purpose. The pattern works for any software:
 
 ## Credits
 
-`third_party/git` is ported from [ghuntley/loom](https://github.com/ghuntley/loom/tree/trunk/third_party/git). `001` has been rebased onto git 2.55.0, the version in the pinned `devenv-nixpkgs/rolling`. `002` and `003` are new in this repository.
+`third_party/git` is ported from [ghuntley/loom](https://github.com/ghuntley/loom/tree/trunk/third_party/git). `001` has been rebased onto git 2.55.0, the version in the pinned `devenv-nixpkgs/rolling`. `002`–`004` are new in this repository.

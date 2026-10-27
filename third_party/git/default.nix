@@ -9,6 +9,8 @@
 #     +refspec and every other forced ref update (config refspecs, --mirror, send-pack)
 #   003-remove-force-push-from-docs.patch - Drops the force options from the
 #     git-push, git-send-pack and push.* config man pages to match 001/002
+#   004-hide-force-push-options.patch - Hides -f/--force, --force-with-lease and
+#     --force-if-includes from `git push -h` (they are still refused)
 #
 # Usage in overlay:
 #   git = import ../third_party/git { inherit (prev) git; };
@@ -21,6 +23,7 @@ let
     ./001-disable-force-push.patch
     ./002-disable-force-with-lease-and-plus-refspec.patch
     ./003-remove-force-push-from-docs.patch
+    ./004-hide-force-push-options.patch
   ];
   patchNames = map baseNameOf customPatches;
   existingPatchNames = map baseNameOf (git.patches or []);
