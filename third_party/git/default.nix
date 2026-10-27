@@ -7,6 +7,8 @@
 #   001-disable-force-push.patch - Disables git push --force
 #   002-disable-force-with-lease-and-plus-refspec.patch - Disables --force-with-lease,
 #     +refspec and every other forced ref update (config refspecs, --mirror, send-pack)
+#   003-remove-force-push-from-docs.patch - Drops the force options from the
+#     git-push, git-send-pack and push.* config man pages to match 001/002
 #
 # Usage in overlay:
 #   git = import ../third_party/git { inherit (prev) git; };
@@ -18,6 +20,7 @@ let
   customPatches = [
     ./001-disable-force-push.patch
     ./002-disable-force-with-lease-and-plus-refspec.patch
+    ./003-remove-force-push-from-docs.patch
   ];
   patchNames = map baseNameOf customPatches;
   existingPatchNames = map baseNameOf (git.patches or []);
