@@ -1,0 +1,75 @@
+diff --git a/Documentation/git-http-push.adoc b/Documentation/git-http-push.adoc
+index ce0d808..d7821ac 100644
+--- a/Documentation/git-http-push.adoc
++++ b/Documentation/git-http-push.adoc
+@@ -9,7 +9,7 @@ git-http-push - Push objects over HTTP/DAV to another repository
+ SYNOPSIS
+ --------
+ [verse]
+-'git http-push' [--all] [--dry-run] [--force] [--verbose] <URL> <ref> [<ref>...]
++'git http-push' [--all] [--dry-run] [--verbose] <URL> <ref> [<ref>...]
+ 
+ DESCRIPTION
+ -----------
+@@ -27,13 +27,6 @@ OPTIONS
+ 	current state, and verify all objects in the entire local
+ 	ref's history exist in the remote repository.
+ 
+---force::
+-	Usually, the command refuses to update a remote ref that
+-	is not an ancestor of the local ref used to overwrite it.
+-	This flag disables the check.  What this means is that
+-	the remote repository can lose commits; use it with
+-	care.
+-
+ --dry-run::
+ 	Do everything except actually send the updates.
+ 
+@@ -80,16 +73,14 @@ and where it is pushed is determined by using the destination side.
+      exist in the set of remote refs; the ref matched <src>
+      locally is used as the name of the destination.
+ 
+-Without `--force`, the <src> ref is stored at the remote only if
++The <src> ref is stored at the remote only if
+ <dst> does not exist, or <dst> is a proper subset (i.e. an
+ ancestor) of <src>.  This check, known as "fast-forward check",
+ is performed to avoid accidentally overwriting the
+ remote ref and losing other peoples' commits from there.
+ 
+-With `--force`, the fast-forward check is disabled for all refs.
+-
+-Optionally, a <ref> parameter can be prefixed with a plus '+' sign
+-to disable the fast-forward check only on that ref.
++This build of Git does not allow the check to be skipped: the
++`--force` option and a leading `+` on a <ref> are ignored.
+ 
+ GIT
+ ---
+diff --git a/http-push.c b/http-push.c
+index 3c23cbb..6e35e52 100644
+--- a/http-push.c
++++ b/http-push.c
+@@ -30,7 +30,7 @@
+ #endif
+ 
+ static const char http_push_usage[] =
+-"git http-push [--all] [--dry-run] [--force] [--verbose] <remote> [<head>...]\n";
++"git http-push [--all] [--dry-run] [--verbose] <remote> [<head>...]\n";
+ 
+ #ifndef XML_STATUS_OK
+ enum XML_Status {
+@@ -1883,9 +1883,11 @@ int cmd_main(int argc, const char **argv)
+ 			continue;
+ 		}
+ 
+-		if (!force_all &&
+-		    !is_null_oid(&ref->old_oid) &&
+-		    !ref->force) {
++		/*
++		 * Force pushes are disabled: ignore --force and +refspecs so
++		 * every update must fast-forward.
++		 */
++		if (!is_null_oid(&ref->old_oid)) {
+ 			if (!odb_has_object(the_repository->objects, &ref->old_oid,
+ 					    ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR) ||
+ 			    !ref_newer(&ref->peer_ref->new_oid,

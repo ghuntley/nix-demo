@@ -1,3 +1,16 @@
+diff --git a/Documentation/config/fetch.adoc b/Documentation/config/fetch.adoc
+index 04ac909..feb63e7 100644
+--- a/Documentation/config/fetch.adoc
++++ b/Documentation/config/fetch.adoc
+@@ -101,7 +101,7 @@ config setting.
+ 	the existing commit-graph file(s). Occasionally, these files will
+ 	merge and the write may take longer. Having an updated commit-graph
+ 	file helps performance of many Git commands, including `git merge-base`,
+-	`git push -f`, and `git log --graph`. Defaults to `false`.
++	`git push`, and `git log --graph`. Defaults to `false`.
+ 
+ `fetch.bundleURI`::
+ 	This value stores a URI for downloading Git object data from a bundle
 diff --git a/Documentation/config/push.adoc b/Documentation/config/push.adoc
 index 28132ee..1d88894 100644
 --- a/Documentation/config/push.adoc
@@ -370,3 +383,66 @@ index 811193f..a75fe4c 100644
  
  GIT
  ---
+diff --git a/Documentation/giteveryday.adoc b/Documentation/giteveryday.adoc
+index 6cfdd0e..2286ee1 100644
+--- a/Documentation/giteveryday.adoc
++++ b/Documentation/giteveryday.adoc
+@@ -323,10 +323,15 @@ repository at kernel.org, and looks like this:
+ 	fetch = refs/heads/*:refs/remotes/ko/*
+ 	push = refs/heads/master
+ 	push = refs/heads/next
+-	push = +refs/heads/seen
++	push = refs/heads/seen
+ 	push = refs/heads/maint
+ ------------
+ 
++This build of Git cannot force-push, so once `seen` has been restarted
++(step 7) pushing it is rejected as a non-fast-forward update, just
++like any other branch. Publish the rebuilt `seen` under a new name
++instead.
++
+ 
+ Repository Administration[[ADMINISTRATION]]
+ -------------------------------------------
+diff --git a/Documentation/user-manual.adoc b/Documentation/user-manual.adoc
+index 5ec65ce..e31b0d5 100644
+--- a/Documentation/user-manual.adoc
++++ b/Documentation/user-manual.adoc
+@@ -2030,29 +2030,17 @@ This can happen, for example, if you:
+ 	- use `git rebase` to rebase any already-published commits (as
+ 	  in <<using-git-rebase>>).
+ 
+-You may force `git push` to perform the update anyway by preceding the
+-branch name with a plus sign:
+-
+--------------------------------------------------
+-$ git push ssh://yourserver.com/~you/proj.git +master
+--------------------------------------------------
+-
+-Note the addition of the `+` sign.  Alternatively, you can use the
+-`-f` flag to force the remote update, as in:
+-
+--------------------------------------------------
+-$ git push -f ssh://yourserver.com/~you/proj.git master
+--------------------------------------------------
+-
+ Normally whenever a branch head in a public repository is modified, it
+ is modified to point to a descendant of the commit that it pointed to
+-before.  By forcing a push in this situation, you break that convention.
+-(See <<problems-With-rewriting-history>>.)
++before (see <<problems-With-rewriting-history>>).  This build of Git
++enforces that: it cannot force `git push` to perform the update anyway,
++and refuses both a leading `+` on the branch name and `git push -f`.
++To publish a rewritten work-in-progress series, push it to a new branch
++instead:
+ 
+-Nevertheless, this is a common practice for people that need a simple
+-way to publish a work-in-progress patch series, and it is an acceptable
+-compromise as long as you warn other developers that this is how you
+-intend to manage the branch.
++-------------------------------------------------
++$ git push ssh://yourserver.com/~you/proj.git master:refs/heads/master-v2
++-------------------------------------------------
+ 
+ It's also possible for a push to fail in this way when other people have
+ the right to push to the same repository.  In that case, the correct
